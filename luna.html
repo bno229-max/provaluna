@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Meu Desafio Escolar</title>
+    <style>
+        :root {
+            --blue: #4F8EF7;
+            --yellow: #FFD93D;
+            --green: #6BCB77;
+            --pink: #FF6B9D;
+            --white: #FFFFFF;
+            --bg-color: #F4F7FE;
+            --text-dark: #333333;
+            --shadow: 0 8px 16px rgba(0,0,0,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            justify-content: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #app-container {
+            width: 100%;
+            max-width: 480px;
+            height: 100%;
+            background-color: var(--bg-color);
+            position: relative;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Telas */
+        .screen {
+            display: none;
+            height: 100%;
+            width: 100%;
+            flex-direction: column;
+            animation: fadeIn 0.3s ease-in-out;
+            position: relative;
+        }
+        .screen.active { display: flex; }
+        .pb-navbar { padding-bottom: 80px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Utilitários */
+        .hidden { display: none !important; }
+        .mt-10 { margin-top: 10px; }
+        .mt-20 { margin-top: 20px; }
+        .bg-blue { background-color: var(--blue); }
+        .bg-yellow { background-color: var(--yellow); }
+        .bg-green { background-color: var(--green); }
+        .bg-pink { background-color: var(--pink); }
+
+        /* Tipografia e Cards */
+        h1, h2, h3 { text-align: center; color: var(--blue); margin-bottom: 10px; }
+        .app-header { padding: 20px; background: var(--white); border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; box-shadow: var(--shadow); z-index: 10;}
+        .content-scroll { flex: 1; overflow-y: auto; padding: 20px; }
+        .card { background: var(--white); padding: 20px; border-radius: 15px; margin-bottom: 15px; box-shadow: var(--shadow); cursor: pointer; transition: transform 0.2s; text-align: center;}
+        .card:active { transform: scale(0.98); }
+        .card-icon { font-size: 40px; margin-bottom: 10px; }
+
+        /* Botões e Inputs */
+        input[type="text"] { width: 100%; padding: 15px; border-radius: 15px; border: 2px solid #E0E7FF; font-size: 16px; margin-bottom: 15px; outline: none; transition: 0.3s; text-align: center; }
+        input[type="text"]:focus { border-color: var(--blue); }
+        .btn { width: 100%; padding: 15px; border-radius: 15px; border: none; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; color: var(--white); }
+        .btn:active { transform: scale(0.95); }
+        .btn-primary { background-color: var(--blue); box-shadow: 0 4px 0 #3a6ecc; }
+        .btn-danger { background-color: var(--pink); box-shadow: 0 4px 0 #cc557d; }
+        .btn-icon { background: none; border: none; font-size: 24px; cursor: pointer; }
+
+        /* Login / Resultado */
+        .login-box, .result-box { margin: auto; background: var(--white); padding: 30px 20px; border-radius: 20px; width: 90%; text-align: center; box-shadow: var(--shadow); }
+        .icon-header { font-size: 60px; margin-bottom: 10px; }
+        #result-medal { font-size: 80px; margin-bottom: 10px; }
+
+        /* Barras de Progresso */
+        .progress-bar { width: 100%; height: 12px; background-color: #E0E7FF; border-radius: 10px; overflow: hidden; margin-top: 5px; }
+        .progress-fill { height: 100%; width: 0%; transition: width 0.4s ease; border-radius: 10px; }
+        .xp-container { display: flex; align-items: center; gap: 10px; font-weight: bold; color: var(--yellow); }
+
+        /* Quiz UI */
+        .quiz-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: var(--white); }
+        .quiz-header h2 { margin: 0; font-size: 18px; }
+        .quiz-progress { border-radius: 0; height: 8px; margin: 0; }
+        .question-container { padding: 30px 20px; flex: 1; display: flex; flex-direction: column; justify-content: center;}
+        .question-container h2 { font-size: 24px; color: var(--text-dark); margin-bottom: 30px; text-align: left;}
+        .option-btn { background: var(--white); border: 2px solid #E0E7FF; padding: 15px; border-radius: 15px; font-size: 18px; margin-bottom: 15px; text-align: left; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05); color: var(--text-dark);}
+        .option-btn.correct { background-color: var(--green); color: var(--white); border-color: var(--green); }
+        .option-btn.wrong { background-color: var(--pink); color: var(--white); border-color: var(--pink); }
+
+        /* Feedback Overlay */
+        .feedback-overlay { position: absolute; top:0; left:0; right:0; bottom:0; background: rgba(255,255,255,0.9); display: flex; justify-content: center; align-items: center; z-index: 100; flex-direction: column;}
+        .feedback-icon { font-size: 100px; animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+
+        /* Navbar Inferior */
+        .navbar { position: absolute; bottom: 0; left: 0; right: 0; background: var(--white); display: flex; justify-content: space-around; padding: 10px 0 15px 0; border-top-left-radius: 20px; border-top-right-radius: 20px; box-shadow: 0 -4px 10px rgba(0,0,0,0.05); z-index: 50; }
+        .nav-item { background: none; border: none; font-size: 22px; cursor: pointer; color: #A0AEC0; transition: 0.3s; display: flex; flex-direction: column; align-items: center; width: 100%;}
+        .nav-item span { font-size: 11px; margin-top: 4px; font-weight: bold; color: var(--text-dark);}
+        .nav-item.active { transform: translateY(-5px); }
+        .nav-item.active span { color: var(--blue); }
+
+        /* Confetti Canvas */
+        #confetti-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 999; }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        
+        <!-- TELA DE LOGIN -->
+        <section id="screen-login" class="screen active">
+            <div class="login-box">
+                <div class="icon-header">🚀</div>
+                <h1>Meu Desafio Escolar</h1>
+                <p style="margin-bottom: 20px; color: #666;">Aprender pode ser divertido!</p>
+                <input type="text" id="input-name" placeholder="Qual é o seu nome?" autocomplete="off">
+                <button id="btn-start" class="btn btn-primary">Começar Aventura! 🌟</button>
+            </div>
+        </section>
+
+        <!-- DASHBOARD (INÍCIO) -->
+        <section id="screen-home" class="screen pb-navbar">
+            <header class="app-header">
+                <h2 id="greeting">Olá, Aluno!</h2>
+                <div class="xp-container">
+                    <span id="level-display">Nível 1</span>
+                    <div class="progress-bar"><div id="xp-bar-fill" class="progress-fill bg-yellow"></div></div>
+                </div>
+            </header>
+            <div class="content-scroll">
+                <div class="summary-cards">
+                    <div class="card" onclick="app.startQuiz('math')">
+                        <div class="card-icon">➕</div>
+                        <h3>Matemática</h3>
+                        <p style="margin-bottom: 5px;">Nota: <strong id="home-math-score">0</strong></p>
+                        <div class="progress-bar"><div id="home-math-progress" class="progress-fill bg-blue"></div></div>
+                    </div>
+                    <div class="card" onclick="app.startQuiz('pt')">
+                        <div class="card-icon">📚</div>
+                        <h3>Português</h3>
+                        <p style="margin-bottom: 5px;">Nota: <strong id="home-pt-score">0</strong></p>
+                        <div class="progress-bar"><div id="home-pt-progress" class="progress-fill bg-green"></div></div>
+                    </div>
+                    <div class="card" onclick="app.startQuiz('en')">
+                        <div class="card-icon">🌎</div>
+                        <h3>Inglês</h3>
+                        <p style="margin-bottom: 5px;">Nota: <strong id="home-en-score">0</strong></p>
+                        <div class="progress-bar"><div id="home-en-progress" class="progress-fill bg-pink"></div></div>
+                    </div>
+                </div>
+                <div class="card general-score" style="background-color: var(--blue); color: white;">
+                    <h3 style="color: white;">🏆 Média Geral</h3>
+                    <h2 id="home-general-avg" style="color: white; font-size: 32px; margin-top: 10px;">0%</h2>
+                </div>
+            </div>
+        </section>
+
+        <!-- TELA DE QUIZ -->
+        <section id="screen-quiz" class="screen">
+            <header class="quiz-header">
+                <button class="btn-icon" onclick="app.navigate('home')">⬅️</button>
+                <h2 id="quiz-title">Matemática</h2>
+                <span id="quiz-counter" style="font-weight: bold; color: var(--blue);">1 de 5</span>
+            </header>
+            <div class="progress-bar quiz-progress"><div id="quiz-progress-fill" class="progress-fill bg-blue"></div></div>
+            
+            <div class="question-container">
+                <h2 id="question-text">Pergunta?</h2>
+                <div class="options-container" id="options-container">
+                    <!-- Opções injetadas via JS -->
+                </div>
+            </div>
+            
+            <div id="feedback-overlay" class="feedback-overlay hidden">
+                <div id="feedback-icon" class="feedback-icon"></div>
+                <h2 id="feedback-text" style="margin-top: 20px;"></h2>
+            </div>
+        </section>
+
+        <!-- TELA DE RESULTADO (PÓS-QUIZ) -->
+        <section id="screen-result" class="screen pb-navbar">
+            <div class="result-box">
+                <h1 id="result-medal">🥇</h1>
+                <h2 id="result-title">Ouro!</h2>
+                <p style="margin: 10px 0;">Você acertou <strong id="result-hits">0</strong> de 5 perguntas!</p>
+                <p style="margin: 10px 0;">Aproveitamento: <strong id="result-percent" style="color: var(--blue);">0%</strong></p>
+                <p style="margin: 10px 0;">Experiência: <strong id="result-score" style="color: var(--green);">+0 XP</strong></p>
+                <button class="btn btn-primary mt-20" onclick="app.navigate('home')">Voltar ao Início</button>
+            </div>
+        </section>
+
+        <!-- TELA DE RANKING -->
+        <section id="screen-ranking" class="screen pb-navbar">
+            <header class="app-header"><h2>🏆 Seu Desempenho</h2></header>
+            <div class="content-scroll">
+                <div class="card" style="border: 2px solid var(--yellow);">
+                    <h3>Geral</h3>
+                    <p style="margin: 5px 0;">Pontuação Total: <strong id="rank-total" style="color: var(--blue); font-size: 18px;">0</strong> XP</p>
+                    <p style="margin: 5px 0;">Melhor Matéria: <strong id="rank-best" style="color: var(--green);">-</strong></p>
+                    <p style="margin: 5px 0;">Precisa Melhorar: <strong id="rank-worst" style="color: var(--pink);">-</strong></p>
+                </div>
+                <div class="card"><h3>➕ Matemática: <span id="rank-math" style="color: var(--text-dark);">0</span> pts</h3></div>
+                <div class="card"><h3>📚 Português: <span id="rank-pt" style="color: var(--text-dark);">0</span> pts</h3></div>
+                <div class="card"><h3>🌎 Inglês: <span id="rank-en" style="color: var(--text-dark);">0</span> pts</h3></div>
+            </div>
+        </section>
+
+        <!-- TELA DE CONFIGURAÇÕES -->
+        <section id="screen-settings" class="screen pb-navbar">
+            <header class="app-header"><h2>⚙️ Configurações</h2></header>
+            <div class="content-scroll">
+                <div class="card">
+                    <h3>Alterar Nome</h3>
+                    <input type="text" id="input-rename" placeholder="Seu novo nome aqui">
+                    <button class="btn btn-primary mt-10" onclick="app.renameUser()">Salvar Nome</button>
+                </div>
+                <div class="card" style="border: 1px solid var(--pink);">
+                    <h3 style="color: var(--pink);">Zona de Perigo</h3>
+                    <p style="font-size: 14px; margin-bottom: 10px; color: #666;">Isso apagará todo o seu progresso, notas e XP.</p>
+                    <button class="btn btn-danger mt-10" onclick="app.resetData()">Apagar todos os dados</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- NAVBAR INFERIOR -->
+        <nav id="bottom-navbar" class="navbar hidden">
+            <button class="nav-item active" data-target="home" onclick="app.navigate('home')">🏠<span>Início</span></button>
+            <button class="nav-item" data-target="math" onclick="app.startQuiz('math')">➕<span>Mat.</span></button>
+            <button class="nav-item" data-target="pt" onclick="app.startQuiz('pt')">📚<span>Port.</span></button>
+            <button class="nav-item" data-target="en" onclick="app.startQuiz('en')">🌎<span>Inglês</span></button>
+            <button class="nav-item" data-target="ranking" onclick="app.navigate('ranking')">🏆<span>Ranking</span></button>
+            <button class="nav-item" data-target="settings" onclick="app.navigate('settings')">⚙️<span>Config</span></button>
+        </nav>
+        
+        <!-- CONFETES CANVAS -->
+        <canvas id="confetti-canvas"></canvas>
+    </div>
+
+    <script>
+        // Banco de Dados de Perguntas (25 opções para sortear)
+        const qMath = [
+            ["Quanto é 5 + 10?", "10", "15", "20", 1], ["Quanto é 8 - 3?", "5", "7", "4", 0], ["Quanto é 2 + 2?", "4", "5", "6", 0],
+            ["Quanto é 10 + 5?", "12", "15", "18", 1], ["Quanto é 9 - 4?", "5", "4", "3", 0], ["Quanto é 3 + 3?", "5", "6", "7", 1],
+            ["Quanto é 7 + 2?", "8", "9", "10", 1], ["Quanto é 10 - 5?", "4", "5", "6", 1], ["Quanto é 6 + 4?", "9", "10", "11", 1],
+            ["Quanto é 8 + 1?", "7", "8", "9", 2], ["Quanto é 5 - 2?", "3", "2", "1", 0], ["Qual é o maior: 10 ou 5?", "5", "10", "Iguais", 1],
+            ["Qual é o menor: 3 ou 8?", "3", "8", "Iguais", 0], ["Qual o dobro de 2?", "2", "4", "6", 1], ["Qual o dobro de 3?", "3", "6", "9", 1],
+            ["Quanto é 4 + 4?", "6", "8", "10", 1], ["Quanto é 9 - 1?", "7", "8", "9", 1], ["Quanto é 1 + 5?", "5", "6", "7", 1],
+            ["Quanto é 10 - 2?", "7", "8", "9", 1], ["Quanto é 7 - 3?", "3", "4", "5", 1], ["Quanto é 5 + 5?", "9", "10", "11", 1],
+            ["Quanto é 2 + 6?", "7", "8", "9", 1], ["Qual é o menor: 1 ou 9?", "1", "9", "Iguais", 0], ["Qual é o maior: 7 ou 4?", "4", "7", "Iguais", 1],
+            ["Quanto é 10 - 9?", "1", "2", "3", 0]
+        ];
+
+        const qPt = [
+            ["Qual palavra começa com a letra B?", "Bola", "Casa", "Escola", 0], ["Qual é a vogal?", "B", "A", "T", 1],
+            ["Qual palavra começa com C?", "Cachorro", "Gato", "Sapo", 0], ["O que é 'Maçã'?", "Fruta", "Animal", "Cor", 0],
+            ["Qual palavra começa com M?", "Dado", "Faca", "Macaco", 2], ["Qual a última letra de 'Gato'?", "A", "O", "U", 1],
+            ["Qual destas é uma consoante?", "E", "I", "P", 2], ["Qual animal começa com L?", "Leão", "Rato", "Pato", 0],
+            ["O que rima com 'Pão'?", "Mão", "Gato", "Pé", 0], ["Qual palavra começa com F?", "Foca", "Bola", "Roda", 0],
+            ["Qual é a primeira letra do alfabeto?", "A", "B", "C", 0], ["Quantas sílabas tem 'Bolo'?", "1", "2", "3", 1],
+            ["O que usamos para escrever?", "Lápis", "Garfo", "Cadeira", 0], ["Qual palavra começa com P?", "Sapo", "Pato", "Gato", 1],
+            ["Qual animal faz 'Miau'?", "Cachorro", "Gato", "Pássaro", 1], ["Qual é a última letra do alfabeto?", "X", "Y", "Z", 2],
+            ["O que rima com 'Gato'?", "Pato", "Cachorro", "Mesa", 0], ["Quantas vogais existem?", "3", "4", "5", 2],
+            ["Qual palavra começa com S?", "Sapo", "Bola", "Casa", 0], ["Onde os pássaros voam?", "No mar", "No céu", "Na terra", 1],
+            ["O que brilha à noite?", "Sol", "Estrela", "Nuvem", 1], ["Qual a primeira sílaba de 'Mesa'?", "Sa", "Me", "Ma", 1],
+            ["Qual palavra começa com V?", "Vaca", "Rato", "Gato", 0], ["O que usamos nos pés?", "Chapéu", "Luva", "Sapato", 2],
+            ["Qual é o plural de 'Menino'?", "Meninos", "Meninas", "Meninões", 0]
+        ];
+
+        const qEn = [
+            ["What color is the sun?", "Yellow", "Blue", "Green", 0], ["What is 'cat'?", "Cachorro", "Gato", "Pássaro", 1],
+            ["What is 'dog'?", "Gato", "Peixe", "Cachorro", 2], ["What color is an apple usually?", "Red", "Blue", "Black", 0],
+            ["What is 'one'?", "1", "2", "3", 0], ["What is 'two'?", "1", "2", "3", 1],
+            ["What is 'three'?", "1", "2", "3", 2], ["Hello significa:", "Tchau", "Olá", "Obrigado", 1],
+            ["Goodbye significa:", "Tchau", "Olá", "Desculpe", 0], ["What is 'Boy'?", "Menino", "Menina", "Mulher", 0],
+            ["What is 'Girl'?", "Homem", "Menina", "Menino", 1], ["What color is the sky?", "Red", "Blue", "Green", 1],
+            ["What is 'Water'?", "Fogo", "Terra", "Água", 2], ["What is 'Bird'?", "Cachorro", "Pássaro", "Gato", 1],
+            ["What is 'Fish'?", "Peixe", "Gato", "Pássaro", 0], ["Thank you significa:", "Desculpe", "Por favor", "Obrigado", 2],
+            ["What color is grass?", "Green", "Blue", "Red", 0], ["What is 'Four'?", "3", "4", "5", 1],
+            ["What is 'Five'?", "4", "5", "6", 1], ["Good morning significa:", "Boa noite", "Boa tarde", "Bom dia", 2],
+            ["What is 'Milk'?", "Água", "Suco", "Leite", 2], ["What is 'Apple'?", "Banana", "Maçã", "Uva", 1],
+            ["What is 'Car'?", "Carro", "Moto", "Avião", 0], ["What is 'Book'?", "Caderno", "Livro", "Lápis", 1],
+            ["What is 'House'?", "Carro", "Casa", "Escola", 1]
+        ];
+
+        const db = { math: qMath, pt: qPt, en: qEn };
+        const subjectNames = { math: "Matemática", pt: "Português", en: "Inglês" };
+        const subjectColors = { math: "var(--blue)", pt: "var(--green)", en: "var(--pink)" };
+        const QUESTIONS_PER_ROUND = 5;
+
+        // Lógica principal
+        const app = {
+            user: { name: "", xp: 0, level: 1, scores: { math: 0, pt: 0, en: 0 } },
+            currentQuiz: { subject: "", index: 0, hits: 0, questions: [] },
+
+            init() {
+                this.loadData();
+                if (this.user.name) {
+                    this.updateDashboard();
+                    this.navigate('home');
+                } else {
+                    this.navigate('login');
+                }
+
+                document.getElementById('btn-start').addEventListener('click', () => {
+                    const name = document.getElementById('input-name').value.trim();
+                    if (name) {
+                        this.user.name = name;
+                        this.saveData();
+                        this.updateDashboard();
+                        this.navigate('home');
+                    }
+                });
+            },
+
+            saveData() { localStorage.setItem('meuDesafioEscolar', JSON.stringify(this.user)); },
+            
+            loadData() {
+                const data = localStorage.getItem('meuDesafioEscolar');
+                if (data) this.user = JSON.parse(data);
+            },
+
+            navigate(screenId) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById(`screen-${screenId}`).classList.add('active');
+                
+                const nav = document.getElementById('bottom-navbar');
+                if (['home', 'ranking', 'settings'].includes(screenId)) {
+                    nav.classList.remove('hidden');
+                    document.querySelectorAll('.nav-item').forEach(btn => {
+                        btn.classList.toggle('active', btn.dataset.target === screenId);
+                    });
+                } else {
+                    nav.classList.add('hidden');
+                }
+
+                if (screenId === 'ranking') this.updateRanking();
+            },
+
+            updateDashboard() {
+                document.getElementById('greeting').innerText = `Olá, ${this.user.name}!`;
+                this.updateXP();
+                
+                const subjects = ['math', 'pt', 'en'];
+                let totalScore = 0;
+                let totalPossible = subjects.length * (QUESTIONS_PER_ROUND * 10); // 5 perguntas * 10 pontos = 50 por matéria
+
+                subjects.forEach(sub => {
+                    const score = this.user.scores[sub] || 0;
+                    totalScore += score;
+                    document.getElementById(`home-${sub}-score`).innerText = score;
+                    
+                    // Limita a barra visual a 100% caso o usuário tenha um score antigo de 25 perguntas
+                    let progress = (score / (QUESTIONS_PER_ROUND * 10)) * 100;
+                    if (progress > 100) progress = 100; 
+                    
+                    document.getElementById(`home-${sub}-progress`).style.width = `${progress}%`;
+                });
+
+                let generalAvg = totalPossible > 0 ? Math.round((totalScore / totalPossible) * 100) : 0;
+                if (generalAvg > 100) generalAvg = 100; // Proteção para scores antigos
+                document.getElementById('home-general-avg').innerText = `${generalAvg}%`;
+            },
+
+            updateXP() {
+                this.user.level = Math.floor(this.user.xp / 100) + 1;
+                if(this.user.level > 10) this.user.level = 10;
+                
+                document.getElementById('level-display').innerText = `Nível ${this.user.level}`;
+                
+                const xpInCurrentLevel = this.user.xp % 100;
+                const xpPercent = this.user.level === 10 ? 100 : xpInCurrentLevel;
+                document.getElementById('xp-bar-fill').style.width = `${xpPercent}%`;
+            },
+
+            startQuiz(subject) {
+                // Sorteia 5 perguntas diferentes do banco
+                const shuffled = [...db[subject]].sort(() => 0.5 - Math.random());
+                const selectedQuestions = shuffled.slice(0, QUESTIONS_PER_ROUND);
+
+                this.currentQuiz = { 
+                    subject: subject, 
+                    index: 0, 
+                    hits: 0, 
+                    questions: selectedQuestions 
+                };
+                
+                document.getElementById('quiz-title').innerText = subjectNames[subject];
+                document.getElementById('quiz-progress-fill').style.backgroundColor = subjectColors[subject];
+                this.renderQuestion();
+                this.navigate('quiz');
+            },
+
+            renderQuestion() {
+                const qData = this.currentQuiz.questions[this.currentQuiz.index];
+                document.getElementById('quiz-counter').innerText = `${this.currentQuiz.index + 1} de ${QUESTIONS_PER_ROUND}`;
+                
+                // Animação suave da barra baseada em 5 perguntas
+                setTimeout(() => {
+                    document.getElementById('quiz-progress-fill').style.width = `${((this.currentQuiz.index) / QUESTIONS_PER_ROUND) * 100}%`;
+                }, 50);
+                
+                document.getElementById('question-text').innerText = qData[0];
+                
+                const optsContainer = document.getElementById('options-container');
+                optsContainer.innerHTML = '';
+                
+                for (let i = 1; i <= 3; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn';
+                    btn.innerText = qData[i];
+                    btn.onclick = () => this.handleAnswer(btn, i - 1 === qData[4]);
+                    optsContainer.appendChild(btn);
+                }
+            },
+
+            handleAnswer(btn, isCorrect) {
+                document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+                
+                const overlay = document.getElementById('feedback-overlay');
+                const icon = document.getElementById('feedback-icon');
+                const text = document.getElementById('feedback-text');
+                
+                overlay.classList.remove('hidden');
+
+                if (isCorrect) {
+                    btn.classList.add('correct');
+                    icon.innerText = '✅';
+                    text.innerText = 'Correto!';
+                    text.style.color = 'var(--green)';
+                    this.currentQuiz.hits++;
+                    this.user.xp += 10;
+                } else {
+                    btn.classList.add('wrong');
+                    icon.innerText = '❌';
+                    text.innerText = 'Tente novamente!';
+                    text.style.color = 'var(--pink)';
+                }
+
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                    this.currentQuiz.index++;
+                    
+                    if (this.currentQuiz.index < QUESTIONS_PER_ROUND) {
+                        this.renderQuestion();
+                    } else {
+                        // Preenche a barra em 100% no finalzinho antes de mudar a tela
+                        document.getElementById('quiz-progress-fill').style.width = `100%`;
+                        setTimeout(() => this.finishQuiz(), 300);
+                    }
+                }, 1200);
+            },
+
+            finishQuiz() {
+                const score = this.currentQuiz.hits * 10;
+                const percent = Math.round((this.currentQuiz.hits / QUESTIONS_PER_ROUND) * 100);
+                
+                if (score > (this.user.scores[this.currentQuiz.subject] || 0)) {
+                    this.user.scores[this.currentQuiz.subject] = score;
+                }
+                this.saveData();
+                this.updateDashboard();
+
+                let medal = '🥉';
+                let medalText = 'Bronze!';
+                if (percent >= 81) { 
+                    medal = '🥇'; 
+                    medalText = 'Ouro!'; 
+                    this.fireConfetti(); 
+                } else if (percent >= 51) { 
+                    medal = '🥈'; 
+                    medalText = 'Prata!'; 
+                }
+
+                document.getElementById('result-medal').innerText = medal;
+                document.getElementById('result-title').innerText = medalText;
+                document.getElementById('result-hits').innerText = this.currentQuiz.hits;
+                document.getElementById('result-percent').innerText = `${percent}%`;
+                document.getElementById('result-score').innerText = `+${score} XP`;
+
+                this.navigate('result');
+            },
+
+            updateRanking() {
+                const { math, pt, en } = this.user.scores;
+                document.getElementById('rank-math').innerText = math;
+                document.getElementById('rank-pt').innerText = pt;
+                document.getElementById('rank-en').innerText = en;
+                document.getElementById('rank-total').innerText = this.user.xp;
+
+                const scoresArr = [
+                    { name: 'Matemática', val: math },
+                    { name: 'Português', val: pt },
+                    { name: 'Inglês', val: en }
+                ].sort((a, b) => b.val - a.val);
+
+                document.getElementById('rank-best').innerText = scoresArr[0].val > 0 ? scoresArr[0].name : 'Nenhuma ainda';
+                document.getElementById('rank-worst').innerText = scoresArr[2].val > 0 ? scoresArr[2].name : 'Nenhuma ainda';
+            },
+
+            renameUser() {
+                const newName = document.getElementById('input-rename').value.trim();
+                if (newName) {
+                    this.user.name = newName;
+                    this.saveData();
+                    this.updateDashboard();
+                    alert("Nome alterado com sucesso!");
+                    document.getElementById('input-rename').value = '';
+                }
+            },
+
+            resetData() {
+                if (confirm("Tem certeza? Todo o progresso será perdido e não poderá ser desfeito!")) {
+                    localStorage.removeItem('meuDesafioEscolar');
+                    location.reload();
+                }
+            },
+
+            fireConfetti() {
+                const canvas = document.getElementById('confetti-canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                const pieces = [];
+                const colors = ['#4F8EF7', '#FFD93D', '#6BCB77', '#FF6B9D'];
+
+                for(let i = 0; i < 150; i++) {
+                    pieces.push({
+                        x: Math.random() * canvas.width, 
+                        y: Math.random() * canvas.height - canvas.height,
+                        w: Math.random() * 10 + 5, 
+                        h: Math.random() * 10 + 5,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        speed: Math.random() * 3 + 2
+                    });
+                }
+
+                let frameId;
+                const animate = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    let active = false;
+                    pieces.forEach(p => {
+                        p.y += p.speed;
+                        if (p.y < canvas.height) active = true;
+                        ctx.fillStyle = p.color;
+                        ctx.fillRect(p.x, p.y, p.w, p.h);
+                    });
+                    if (active) {
+                        frameId = requestAnimationFrame(animate);
+                    } else {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        cancelAnimationFrame(frameId);
+                    }
+                };
+                animate();
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => app.init());
+    </script>
+</body>
+</html>
